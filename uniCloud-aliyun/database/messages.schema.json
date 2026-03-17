@@ -1,0 +1,21 @@
+{
+  "bsonType": "object",
+  "required": ["user_id", "type", "content"],
+  "permission": {
+    "read": "doc.user_id == auth.uid || 'admin' in auth.role",
+    "create": "auth.uid != null",
+    "update": "doc.user_id == auth.uid",
+    "delete": "'admin' in auth.role"
+  },
+  "properties": {
+    "_id": { "description": "消息ID" },
+    "user_id": { "bsonType": "string", "title": "接收用户ID", "foreignKey": "uni-id-users._id" },
+    "type": { "bsonType": "string", "title": "消息类型", "description": "like/comment/system/points/activity" },
+    "content": { "bsonType": "string", "title": "消息内容" },
+    "post_id": { "bsonType": "string", "title": "关联帖子ID" },
+    "activity_id": { "bsonType": "string", "title": "关联活动ID" },
+    "from_user_id": { "bsonType": "string", "title": "触发用户ID" },
+    "read": { "bsonType": "bool", "title": "是否已读", "defaultValue": false },
+    "created_at": { "bsonType": "timestamp", "title": "创建时间" }
+  }
+}

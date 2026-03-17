@@ -1,0 +1,31 @@
+{
+  "bsonType": "object",
+  "required": ["name", "file_url"],
+  "permission": {
+    "read": true,
+    "create": "'admin' in auth.role",
+    "update": "'admin' in auth.role",
+    "delete": "'admin' in auth.role"
+  },
+  "properties": {
+    "_id": { "description": "模型ID" },
+    "name": { "bsonType": "string", "title": "模型名称" },
+    "description": { "bsonType": "string", "title": "模型描述" },
+    "file_url": { "bsonType": "string", "title": "FBX模型文件URL" },
+    "thumbnail_url": { "bsonType": "string", "title": "缩略图URL" },
+    "status": { "bsonType": "string", "title": "状态 active/inactive", "defaultValue": "active" },
+    "hotspots": {
+      "bsonType": "array", "title": "热点标注列表",
+      "items": {
+        "bsonType": "object",
+        "properties": {
+          "name": { "bsonType": "string" },
+          "description": { "bsonType": "string" },
+          "image": { "bsonType": "string" },
+          "position": { "bsonType": "object" }
+        }
+      }
+    },
+    "uploaded_at": { "bsonType": "timestamp", "title": "上传时间" }
+  }
+}

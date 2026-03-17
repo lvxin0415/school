@@ -1,0 +1,65 @@
+:root {
+  --c-primary: #8C61D6;
+  --c-primary-dk: #6B47B8;
+  --c-primary-lt: #A882E0;
+  --c-secondary: #747288;
+  --c-accent: #BBA2CA;
+  --c-pink: #D4A5C0;
+  --c-sky: #94B8D6;
+
+  --c-text: #3A3030;
+  --c-text-sub: #747288;
+  --c-text-hint: #A09CAE;
+
+  --c-bg: #F7F6FA;
+  --c-card: #FFFFFF;
+  --c-border: #ECEAF0;
+
+  --c-danger: #E06B6B;
+  --c-success: #6BAE8A;
+  --c-warning: #E6A84E;
+
+  --shadow-sm: 0 1rpx 6rpx rgba(0,0,0,0.03);
+  --shadow-md: 0 2rpx 12rpx rgba(0,0,0,0.05);
+  --shadow-lg: 0 4rpx 20rpx rgba(0,0,0,0.08);
+  --shadow-btn: 0 4rpx 16rpx rgba(140,97,214,0.18);
+
+  --r-card: 24rpx;
+  --r-sm: 16rpx;
+  --r-icon: 16rpx;
+  --r-pill: 100rpx;
+  --r-btn: 48rpx;
+  --r-input: 16rpx;
+}
+
+page {
+  background-color: var(--c-bg);
+  font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', 'Noto Sans CJK SC', sans-serif;
+  font-size: 28rpx;
+  color: var(--c-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.safe-area-bottom {
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-top {
+  padding-top: constant(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top);
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-ellipsis-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}

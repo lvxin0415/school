@@ -1,0 +1,6 @@
+{
+  "name": "get-unread-count",
+  "version": "1.0.0",
+  "description": "获取未读消息数量",
+  "main": "index.js"
+}

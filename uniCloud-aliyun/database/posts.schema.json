@@ -1,0 +1,26 @@
+{
+  "bsonType": "object",
+  "required": ["content", "user_id"],
+  "permission": {
+    "read": true,
+    "create": "auth.uid != null",
+    "update": "doc.user_id == auth.uid || 'admin' in auth.role",
+    "delete": "'admin' in auth.role"
+  },
+  "properties": {
+    "_id": { "description": "帖子ID" },
+    "user_id": { "bsonType": "string", "title": "发帖用户ID", "foreignKey": "uni-id-users._id" },
+    "content": { "bsonType": "string", "title": "帖子内容", "maxLength": 500 },
+    "images": { "bsonType": "array", "title": "图片列表", "items": { "bsonType": "string" } },
+    "tags": { "bsonType": "array", "title": "话题标签", "items": { "bsonType": "string" } },
+    "anonymous_name": { "bsonType": "string", "title": "匿名昵称" },
+    "avatar_color": { "bsonType": "string", "title": "匿名头像色" },
+    "likes": { "bsonType": "int", "title": "点赞数", "defaultValue": 0 },
+    "liked_users": { "bsonType": "array", "title": "点赞用户列表", "items": { "bsonType": "string" } },
+    "comment_count": { "bsonType": "int", "title": "评论数", "defaultValue": 0 },
+    "status": { "bsonType": "string", "title": "状态", "description": "pending/approved/rejected/reported", "defaultValue": "pending" },
+    "is_top": { "bsonType": "bool", "title": "是否置顶", "defaultValue": false },
+    "created_at": { "bsonType": "timestamp", "title": "创建时间" },
+    "updated_at": { "bsonType": "timestamp", "title": "更新时间" }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "bsonType": "object",
+  "required": ["username"],
+  "permission": {
+    "read": "doc._id == auth.uid || 'admin' in auth.role",
+    "create": true,
+    "update": "doc._id == auth.uid || 'admin' in auth.role",
+    "delete": "'admin' in auth.role"
+  },
+  "properties": {
+    "_id": { "description": "用户ID" },
+    "username": {
+      "bsonType": "string",
+      "title": "用户名",
+      "minLength": 3,
+      "maxLength": 20
+    },
+    "password": {
+      "bsonType": "string",
+      "title": "密码"
+    },
+    "nickname": {
+      "bsonType": "string",
+      "title": "昵称",
+      "maxLength": 20
+    },
+    "avatar": {
+      "bsonType": "string",
+      "title": "头像URL"
+    },
+    "role": {
+      "bsonType": "array",
+      "title": "角色",
+      "description": "用户角色，如 ['user'] 或 ['admin']",
+      "items": { "bsonType": "string" }
+    },
+    "status": {
+      "bsonType": "int",
+      "title": "状态",
+      "description": "0-正常 1-封禁",
+      "defaultValue": 0
+    },
+    "points": {
+      "bsonType": "int",
+      "title": "积分",
+      "defaultValue": 0
+    },
+    "register_date": {
+      "bsonType": "timestamp",
+      "title": "注册时间"
+    },
+    "last_login_date": {
+      "bsonType": "timestamp",
+      "title": "最后登录时间"
+    },
+    "token": {
+      "bsonType": "array",
+      "title": "Token列表"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "mark-all-read",
+  "version": "1.0.0",
+  "description": "标记所有消息已读",
+  "main": "index.js"
+}
