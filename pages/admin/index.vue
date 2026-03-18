@@ -7,8 +7,9 @@
           <text class="hd-greeting">管理后台</text>
           <text class="hd-sub">数据概览 · 今日</text>
         </view>
-        <view class="hd-avatar">
-          <text class="ri-shield-keyhole-fill hd-avatar-ico"></text>
+        <view class="hd-logout" @click="handleLogout">
+          <text class="ri-logout-box-r-line hd-logout-ico"></text>
+          <text class="hd-logout-text">退出</text>
         </view>
       </view>
 
@@ -167,6 +168,20 @@ onMounted(async () => {
 
 function goTo(url) { uni.navigateTo({ url }) }
 function switchTab(url) { uni.redirectTo({ url }) }
+function handleLogout() {
+  uni.showModal({
+    title: '退出登录',
+    content: '确定退出管理后台？',
+    success: (r) => {
+      if (r.confirm) {
+        uni.removeStorageSync('uni_id_token')
+        uni.removeStorageSync('uni_id_token_expired')
+        uni.removeStorageSync('userInfo')
+        uni.reLaunch({ url: '/pages/login/login' })
+      }
+    }
+  })
+}
 </script>
 
 <style scoped>
@@ -200,16 +215,16 @@ function switchTab(url) { uni.redirectTo({ url }) }
   display: block;
   margin-top: 4rpx;
 }
-.hd-avatar {
-  width: 76rpx;
-  height: 76rpx;
-  border-radius: 50%;
-  background: rgba(255,255,255,.18);
+.hd-logout {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6rpx;
+  background: rgba(255,255,255,.18);
+  border-radius: 100rpx;
+  padding: 12rpx 24rpx;
 }
-.hd-avatar-ico { font-size: 38rpx; color: #FFF; }
+.hd-logout-ico { font-size: 28rpx; color: rgba(255,255,255,.85); }
+.hd-logout-text { font-size: 24rpx; color: rgba(255,255,255,.85); }
 
 /* ── Stat Cards ── */
 .stats-row {

@@ -22,11 +22,8 @@
           <view v-if="m.status !== 'active'" class="op-pill op-enable" @click="toggleModel(m._id, 'active')">
             <text class="ri-play-circle-line op-ico"></text>
           </view>
-          <view v-else class="op-pill op-disable" @click="toggleModel(m._id, 'inactive')">
+          <view v-else class="op-pill op-disable" @click="toggleModel(m._id, 'disabled')">
             <text class="ri-pause-circle-line op-ico"></text>
-          </view>
-          <view class="op-pill op-hs" @click="goHotspots(m._id)">
-            <text class="ri-map-pin-2-line op-ico"></text>
           </view>
           <view class="op-pill op-del" @click="deleteModel(m)">
             <text class="ri-delete-bin-6-line op-ico"></text>

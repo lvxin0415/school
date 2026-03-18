@@ -104,127 +104,169 @@ export default {
 
 <script module="render" lang="renderjs">
 let THREE, scene, camera, renderer, controls, mixer
-let container, animationId
+let container
 
 export default {
   methods: {
     async onModelUrlChange(url) {
       if (!url) return
       const realUrl = url.split('?')[0]
-      await this.initThree()
-      this.loadModel(realUrl)
+      try {
+        await this.initThree()
+        this.loadModel(realUrl)
+      } catch (e) {
+        console.error('初始化失败:', e)
+        this.$ownerInstance.callMethod('onLoadProgress', 100)
+      }
     },
     onHotspotsChange() {},
 
     async initThree() {
       if (THREE) {
-        // 重置视角
-        if (controls) {
-          controls.reset()
-        }
+        if (controls) controls.reset()
         return
       }
 
-      // 动态加载 three.js
-      await this.loadScript('https://unpkg.com/three@0.157.0/build/three.min.js')
-      await this.loadScript('https://unpkg.com/three@0.157.0/examples/js/loaders/FBXLoader.js')
-      await this.loadScript('https://unpkg.com/three@0.157.0/examples/js/controls/OrbitControls.js')
-      // fflate for FBXLoader
-      await this.loadScript('https://unpkg.com/fflate@0.8.1/umd/index.js')
+      const CDN = 'https://cdn.jsdelivr.net/npm'
+
+      await this.loadScript(`${CDN}/three@0.128.0/build/three.min.js`)
+
+      // fflate UMD 需要 exports/module 全局变量
+      const hadExports = 'exports' in window
+      const hadModule = 'module' in window
+      const origExports = window.exports
+      const origModule = window.module
+      window.exports = {}
+      window.module = { exports: window.exports }
+
+      await this.loadScript(`${CDN}/fflate@0.7.4/umd/index.js`)
+
+      window.fflate = window.module.exports
+      if (Object.keys(window.fflate).length === 0 && window.exports && Object.keys(window.exports).length > 0) {
+        window.fflate = window.exports
+      }
+
+      // 还原全局变量
+      if (hadExports) { window.exports = origExports } else { delete window.exports }
+      if (hadModule) { window.module = origModule } else { delete window.module }
+
+      await this.loadScript(`${CDN}/three@0.128.0/examples/js/loaders/FBXLoader.js`)
+      await this.loadScript(`${CDN}/three@0.128.0/examples/js/controls/OrbitControls.js`)
 
       THREE = window.THREE
       container = document.getElementById('three-container')
       if (!container) return
 
-      // Scene
       scene = new THREE.Scene()
-      scene.background = new THREE.Color(0xf0f0f0)
+      scene.background = new THREE.Color(0xa0a0a0)
 
-      // Camera
       const w = container.clientWidth || window.innerWidth
       const h = container.clientHeight || window.innerHeight
-      camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 1000)
-      camera.position.set(0, 50, 100)
+      camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 5000)
+      camera.position.set(0, 80, 150)
 
-      // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
       renderer.setSize(w, h)
-      renderer.setPixelRatio(window.devicePixelRatio)
-      renderer.shadowMap.enabled = true
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
       container.appendChild(renderer.domElement)
 
-      // Lights
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
-      scene.add(ambientLight)
-      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8)
-      dirLight.position.set(50, 100, 50)
-      dirLight.castShadow = true
+      scene.add(new THREE.AmbientLight(0xffffff, 0.65))
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
+      dirLight.position.set(100, 200, 80)
       scene.add(dirLight)
+      const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.2)
+      dirLight2.position.set(-60, 120, -60)
+      scene.add(dirLight2)
 
-      // Controls
       controls = new THREE.OrbitControls(camera, renderer.domElement)
-      controls.enablePan = false
+      controls.enablePan = true
       controls.minDistance = 5
-      controls.maxDistance = 200
+      controls.maxDistance = 500
       controls.enableDamping = true
-      controls.dampingFactor = 0.05
+      controls.dampingFactor = 0.08
 
-      // Animation loop
       const animate = () => {
-        animationId = requestAnimationFrame(animate)
+        requestAnimationFrame(animate)
         if (mixer) mixer.update(0.016)
         controls.update()
         renderer.render(scene, camera)
       }
       animate()
 
-      // Resize
       window.addEventListener('resize', () => {
-        const w2 = container.clientWidth || window.innerWidth
-        const h2 = container.clientHeight || window.innerHeight
-        camera.aspect = w2 / h2
+        if (!container) return
+        const nw = container.clientWidth || window.innerWidth
+        const nh = container.clientHeight || window.innerHeight
+        camera.aspect = nw / nh
         camera.updateProjectionMatrix()
-        renderer.setSize(w2, h2)
+        renderer.setSize(nw, nh)
       })
     },
 
     loadModel(url) {
-      const loader = new THREE.FBXLoader()
+      const isFBX = /\.fbx$/i.test(url)
+      let loader
+      if (isFBX) {
+        loader = new THREE.FBXLoader()
+      } else if (THREE.GLTFLoader) {
+        loader = new THREE.GLTFLoader()
+      } else {
+        loader = new THREE.FBXLoader()
+      }
+
       loader.load(
         url,
-        (object) => {
+        (result) => {
+          const object = result.scene || result
+
           object.traverse((child) => {
             if (child.isMesh) {
-              child.castShadow = true
-              child.receiveShadow = true
+              if (child.geometry && child.geometry.attributes && child.geometry.attributes.color) {
+                child.geometry.deleteAttribute('color')
+              }
+              const mats = Array.isArray(child.material) ? child.material : [child.material]
+              const newMats = mats.map((mat) => {
+                if (!mat) return mat
+                return new THREE.MeshLambertMaterial({
+                  color: mat.color ? mat.color.clone() : new THREE.Color(0xcccccc),
+                  map: mat.map || null,
+                  opacity: mat.opacity,
+                  transparent: mat.transparent,
+                  side: THREE.DoubleSide,
+                  vertexColors: false
+                })
+              })
+              child.material = newMats.length === 1 ? newMats[0] : newMats
             }
           })
-          // 自动缩放适配
+
           const box = new THREE.Box3().setFromObject(object)
           const size = box.getSize(new THREE.Vector3())
           const maxDim = Math.max(size.x, size.y, size.z)
-          const scale = 50 / maxDim
-          object.scale.setScalar(scale)
-
-          const center = box.getCenter(new THREE.Vector3())
-          object.position.sub(center.multiplyScalar(scale))
+          if (maxDim > 0) {
+            const scale = 80 / maxDim
+            object.scale.setScalar(scale)
+            const center = box.getCenter(new THREE.Vector3())
+            object.position.sub(center.multiplyScalar(scale))
+          }
 
           scene.add(object)
 
-          // 设置动画
           if (object.animations && object.animations.length) {
             mixer = new THREE.AnimationMixer(object)
-            object.animations.forEach((clip) => {
-              mixer.clipAction(clip).play()
-            })
+            object.animations.forEach((clip) => mixer.clipAction(clip).play())
           }
+
+          camera.position.set(0, 60, 120)
+          controls.target.set(0, 0, 0)
+          controls.update()
 
           this.$ownerInstance.callMethod('onLoadProgress', 100)
         },
         (xhr) => {
           if (xhr.total > 0) {
             const p = Math.round((xhr.loaded / xhr.total) * 100)
-            this.$ownerInstance.callMethod('onLoadProgress', p)
+            this.$ownerInstance.callMethod('onLoadProgress', Math.min(p, 99))
           }
         },
         (error) => {
@@ -236,15 +278,12 @@ export default {
 
     loadScript(src) {
       return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-          resolve()
-          return
-        }
-        const script = document.createElement('script')
-        script.src = src
-        script.onload = resolve
-        script.onerror = reject
-        document.head.appendChild(script)
+        if (document.querySelector(`script[src="${src}"]`)) return resolve()
+        const s = document.createElement('script')
+        s.src = src
+        s.onload = resolve
+        s.onerror = () => reject(new Error('Script load failed: ' + src))
+        document.head.appendChild(s)
       })
     }
   }

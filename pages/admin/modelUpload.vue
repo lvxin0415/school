@@ -43,50 +43,30 @@ const fileName = ref('')
 const filePath = ref('')
 const thumbnail = ref('')
 const uploading = ref(false)
+const isH5 = typeof window !== 'undefined' && typeof document !== 'undefined' && !window.plus
 
 function chooseFile() {
-  // #ifdef MP-WEIXIN
-  uni.chooseMessageFile({
-    count: 1,
-    type: 'file',
-    success: (res) => {
-      filePath.value = res.tempFiles[0].path
-      fileName.value = res.tempFiles[0].name
+  if (isH5) {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.fbx,.glb,.gltf,.obj,.FBX,.GLB'
+    input.onchange = (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+      fileName.value = file.name
+      filePath.value = URL.createObjectURL(file)
     }
-  })
-  // #endif
-  // #ifdef H5
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = '.fbx,.glb,.gltf,.obj'
-  input.onchange = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    fileName.value = file.name
-    filePath.value = URL.createObjectURL(file)
-    filePath._file = file
+    input.click()
+  } else if (uni.chooseMessageFile) {
+    uni.chooseMessageFile({
+      count: 1,
+      type: 'file',
+      success: (res) => {
+        filePath.value = res.tempFiles[0].path
+        fileName.value = res.tempFiles[0].name
+      }
+    })
   }
-  input.click()
-  // #endif
-  // #ifdef APP-PLUS
-  plus.io.chooseFile({
-    count: 1,
-    extension: ['.fbx', '.glb', '.gltf', '.obj'],
-    success: (res) => {
-      filePath.value = res.tempFiles[0].path
-      fileName.value = res.tempFiles[0].name
-    },
-    fail: () => {
-      uni.chooseImage({
-        count: 1,
-        success: (res) => {
-          filePath.value = res.tempFilePaths[0]
-          fileName.value = res.tempFilePaths[0].split('/').pop()
-        }
-      })
-    }
-  })
-  // #endif
 }
 
 function chooseThumbnail() {
@@ -101,25 +81,29 @@ async function handleUpload() {
   if (!filePath.value) return uni.showToast({ title: '请选择模型文件', icon: 'none' })
   uploading.value = true
   try {
+    const cloudPath = `models/${Date.now()}_${fileName.value}`
+
     let fileUrl = ''
     if (filePath.value) {
-      const uploadOpts = { filePath: filePath.value, cloudPath: `models/${Date.now()}_${fileName.value}` }
-      // #ifdef H5
-      if (filePath._file) uploadOpts.filePath = filePath._file
-      // #endif
-      const uploadRes = await uniCloud.uploadFile(uploadOpts)
+      const uploadRes = await uniCloud.uploadFile({ filePath: filePath.value, cloudPath })
       fileUrl = uploadRes.fileID
     }
+
     let thumbUrl = ''
     if (thumbnail.value) {
       const thumbRes = await uniCloud.uploadFile({ filePath: thumbnail.value, cloudPath: `thumbnails/${Date.now()}.jpg` })
       thumbUrl = thumbRes.fileID
     }
+
     await callCloud('admin-upload-model', { name: name.value, description: description.value, file_url: fileUrl, thumbnail_url: thumbUrl })
     uni.showToast({ title: '上传成功', icon: 'success' })
     setTimeout(() => uni.navigateBack(), 500)
-  } catch (e) { console.error(e); uni.showToast({ title: '上传失败', icon: 'none' }) }
-  finally { uploading.value = false }
+  } catch (e) {
+    console.error('上传错误:', e)
+    uni.showToast({ title: e.message || '上传失败', icon: 'none' })
+  } finally {
+    uploading.value = false
+  }
 }
 </script>
 
