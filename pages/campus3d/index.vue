@@ -45,6 +45,10 @@
       <text class="tip-text">单指拖动旋转 · 双指缩放 · 双击重置</text>
       <view class="tip-close" @click="showTip = false"><text class="ri-close-line tip-close-ico"></text></view>
     </view>
+
+    <view v-if="showWebviewClose" class="webview-bottom-bar safe-area-bottom" @click="closeMugedaWebview">
+      <text class="webview-close-text">关闭预览</text>
+    </view>
   </view>
 </template>
 
@@ -59,8 +63,22 @@ export default {
       hotspots: [],
       showHotspot: false,
       currentHotspot: {},
-      showTip: true
+      showTip: true,
+      showWebviewClose: false
     }
+  },
+  onReady() {
+    // #ifdef APP-PLUS
+    this.openMugedaWebview()
+    // #endif
+  },
+  onUnload() {
+    // #ifdef APP-PLUS
+    if (this._mugedaWv) {
+      this._mugedaWv.close('none')
+      this._mugedaWv = null
+    }
+    // #endif
   },
   async onLoad() {
     try {
@@ -85,9 +103,44 @@ export default {
   methods: {
     goBack() { uni.navigateBack() },
     resetView() {
-      // 通知 renderjs 重置视角
       this.modelUrl = this.modelUrl + '?reset=' + Date.now()
     },
+    // #ifdef APP-PLUS
+    openMugedaWebview() {
+      const sysInfo = uni.getSystemInfoSync()
+      const screenH = sysInfo.screenHeight
+      const statusBarH = sysInfo.statusBarHeight || 0
+      const bottomBarHeight = 50 + (sysInfo.safeAreaInsets ? sysInfo.safeAreaInsets.bottom : 0)
+      const wvHeight = screenH - statusBarH - bottomBarHeight
+
+      const wv = plus.webview.create(
+        'https://preview.mugeda.net/client/content_preview.html?id=007978d8',
+        'mugeda-preview',
+        {
+          top: statusBarH + 'px',
+          left: '0px',
+          width: '100%',
+          height: wvHeight + 'px'
+        }
+      )
+
+      const pages = getCurrentPages()
+      const page = pages[pages.length - 1]
+      const currentWebview = page.$getAppWebview()
+      currentWebview.append(wv)
+      wv.show()
+
+      this._mugedaWv = wv
+      this.showWebviewClose = true
+    },
+    closeMugedaWebview() {
+      if (this._mugedaWv) {
+        this._mugedaWv.close('none')
+        this._mugedaWv = null
+      }
+      this.showWebviewClose = false
+    },
+    // #endif
     onHotspotClick(data) {
       this.currentHotspot = data
       this.showHotspot = true
@@ -485,5 +538,25 @@ export default {
 .tip-close-ico {
   font-size: 28rpx;
   color: #FFFFFF;
+}
+
+.webview-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  border-top: 1rpx solid #ECEAF0;
+}
+
+.webview-close-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #8C61D6;
 }
 </style>
